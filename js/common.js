@@ -988,8 +988,8 @@
       renderFallback();
     };
     img.src = imgPath;
-    // 兜底：300ms 若 img 未加载完仍显示降级
-    setTimeout(function () { if (!loaded) renderFallback(); }, 320);
+    // 兜底：1500ms 若 img 未加载完仍显示降级（给大图片足够加载时间）
+    setTimeout(function () { if (!loaded) renderFallback(); }, 1500);
     layer.appendChild(box);
     (document.querySelector('.app') || document.body).appendChild(layer);
     // 总时长：0.4 入场 + 2.7 停留 = 3.1s 后开始出场（再加 0.4s 出场 ≈ 3.5s）
