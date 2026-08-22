@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>喃言 · 空间</title>
+  <link rel="stylesheet" href="css/common.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- 顶部 -->
+    <div class="topbar">
+      <button class="btn-back" id="backBtn" style="color:var(--ink)"></button>
+      <div class="title" id="topTitle" style="text-align:center">空间</div>
+      <button class="action" id="setBtn" style="color:var(--ink)"></button>
+    </div>
+
+    <!-- 空间头部 -->
+    <div class="space-head">
+      <div class="avatars" id="headAvatars"></div>
+      <div class="s-info">
+        <div class="s-name" id="headName">—</div>
+        <div class="s-intro" id="headIntro">—</div>
+      </div>
+      <div class="s-act" id="codeBtn" title="邀请码" style="color:var(--fog-dark)"></div>
+    </div>
+
+    <!-- 标签 -->
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="bubbles">泡泡</div>
+      <div class="tab" data-tab="secret">密语</div>
+      <div class="tab" data-tab="invite">邀约</div>
+      <div class="tab" data-tab="calendar">情绪日历</div>
+      <div class="tab" data-tab="report">周报</div>
+    </div>
+
+    <!-- 内容 -->
+    <div class="page-scroller" id="tabContent" style="padding:14px 18px 80px"></div>
+
+    <!-- 底部输入栏（动态） -->
+    <div class="bottom-bar hidden" id="bottomBar"></div>
+  </div>
+
+  <!-- 聊一聊会话面板挂载点 -->
+  <div id="overlay"></div>
+
+  <script src="js/html2canvas.min.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/space.js"></script>
+</body>
+</html>

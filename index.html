@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>喃言 · 有些话，轻轻说</title>
+  <link rel="stylesheet" href="css/common.css" />
+</head>
+<body>
+  <div class="app brand-page">
+    <!-- 品牌区 -->
+    <div class="brand-hero">
+      <div class="brand-title" id="brandTitle">喃 言</div>
+      <div class="logo-emo" id="logoEmo">
+        <img src="images/logo.png" id="logoImg" alt="喃言" />
+        <div id="logoFallback"></div>
+      </div>
+      <div class="slogan">有些话，轻轻说</div>
+      <div class="desc">两个人的情绪空间<br/>把细碎情绪好好讲给在意的人听<br/>把心里话，装进泡泡里</div>
+    </div>
+
+    <!-- 表单区 -->
+    <div class="card" style="margin-bottom: 28px;">
+      <div class="seg" id="seg">
+        <div class="seg-item active" data-mode="login">登录</div>
+        <div class="seg-item" data-mode="register">注册</div>
+      </div>
+
+      <form id="authForm" autocomplete="off">
+        <div class="field">
+          <label>用户名</label>
+          <input class="input" id="username" placeholder="2-16位中英文/数字/下划线" maxlength="16" />
+          <div class="field-hint"><span id="usernameHint" class="muted">用于登录的唯一账号</span></div>
+        </div>
+        <div class="field">
+          <label>密码</label>
+          <input class="input" id="password" type="password" placeholder="至少4位" />
+        </div>
+        <div class="field" id="pwd2Field" style="display:none">
+          <label>确认密码</label>
+          <input class="input" id="password2" type="password" placeholder="再输入一次" />
+        </div>
+        <button class="btn" type="submit" id="submitBtn">登 录</button>
+      </form>
+    </div>
+
+    <div class="center faint small" style="margin-bottom: 16px;">
+      数据仅保存在本机浏览器，不联网
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

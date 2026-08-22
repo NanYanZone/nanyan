@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>喃言 · 周报海报</title>
+  <link rel="stylesheet" href="css/common.css" />
+  <style>
+    /* 海报页面：全局背景与海报一致，让用户截图看起来没有边界感 */
+    body { background: #ECE7F3; }
+    .app { background: #ECE7F3; }
+    /* 顶栏：在海报页面保持更简洁，透明背景与整体融合 */
+    .topbar { background: #ECE7F3; padding-bottom: 6px; }
+    .poster-wrap {
+      flex: 1; width: 100%;
+      display: flex; justify-content: center;
+      padding: 16px 18px 32px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .poster-inner {
+      width: 100%; max-width: 360px;
+    }
+    /* 海报中的可编辑文案在此页不可编辑，避免误改 */
+    #posterView .p-quote { contenteditable: false; outline: none; cursor: default; }
+    /* 给海报多一点外框呼吸感，截图时整页背景与海报融合无边界 */
+    .poster-shadow {
+      border-radius: 20px;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="topbar">
+      <button class="btn-back" id="backBtn" aria-label="返回" style="color:var(--ink)"></button>
+      <div class="title" style="text-align:center">周报海报</div>
+      <div style="width:36px"></div>
+    </div>
+    <div class="poster-wrap">
+      <div class="poster-inner">
+        <div class="poster-shadow" id="posterWrap">
+          <!-- 海报 DOM 由 JS 注入，结构与 space.js renderReport 的 #poster 完全一致 -->
+          <div id="posterView" class="poster" style="margin:0 auto">
+            <div class="center faint small" style="padding:40px 0">加载中…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+  (function init() {
+    'use strict';
+
+    // 从 URL 读空间 id
+    function qs(name) {
+      var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+    var spaceId = qs('id');
+    console.log('[poster] 启动, spaceId=', spaceId, 'readyState=', document.readyState);
+
+    // === N 就绪检查（带重试）：common.js 同步执行，理论上立即可用，但保险起见 ===
+    // 注意：严格模式下不能用 arguments.callee，所以用命名函数表达式 init 引用自身
+    if (typeof N === 'undefined' || !N || !N.utils || !N.Space || !N.Auth) {
+      console.log('[poster] N未准备好，100ms后重试');
+      setTimeout(init, 100);
+      return;
+    }
+    console.log('[poster] N存在:', typeof N !== 'undefined');
+    console.log('[poster] N.utils:', typeof N.utils);
+    console.log('[poster] N.Space:', typeof N.Space);
+    console.log('[poster] N.Auth:', typeof N.Auth);
+    console.log('[poster] N.EMOTIONS:', typeof N.EMOTIONS, N.EMOTIONS ? N.EMOTIONS.length : 0);
+    console.log('[poster] startOfWeek:', typeof N.utils.startOfWeek);
+    console.log('[poster] statsForWeek:', typeof N.Space.statsForWeek);
+    console.log('[poster] weekRange:', typeof N.utils.weekRange);
+    console.log('[poster] fmtDate:', typeof N.utils.fmtDate);
+    console.log('[poster] emoSvg:', typeof N.emoSvg);
+    console.log('[poster] emoName:', typeof N.emoName);
+    console.log('[poster] avatarSvg:', typeof N.avatarSvg);
+
+    // === 鉴权 & 数据存在性检查 ===
+    // 注意：N.Auth 没有 session() 方法，必须用 currentUser() 来判断是否登录
+    var me = N.Auth.currentUser();
+    if (!me) {
+      console.warn('[poster] 未登录，跳转 login.html');
+      N.toastErr('请先登录');
+      setTimeout(function () { location.href = 'login.html'; }, 800);
+      return;
+    }
+    if (!spaceId) {
+      console.warn('[poster] 缺少空间参数');
+      N.toastErr('缺少空间参数');
+      setTimeout(function () { location.href = 'profile.html'; }, 800);
+      return;
+    }
+    var sp = N.Space.list()[spaceId];
+    console.log('[poster] 空间数据:', sp ? '存在, members=' + (sp.members ? sp.members.length : 0) + ', bubbles=' + (sp.bubbles || []).length + ', messages=' + (sp.messages || []).length : '不存在');
+    if (!sp) {
+      console.warn('[poster] 空间不存在, spaceId=', spaceId);
+      N.toastErr('空间不存在');
+      setTimeout(function () { location.href = 'profile.html'; }, 800);
+      return;
+    }
+
+    // 顶栏图标：手动注入返回图标
+    var backBtn = document.getElementById('backBtn');
+    if (backBtn && N.icon) {
+      backBtn.innerHTML = N.icon('back');
+    }
+    if (backBtn) {
+      backBtn.onclick = function () {
+        location.href = 'space.html?id=' + encodeURIComponent(spaceId) + '&tab=report';
+      };
+    }
+
+    // 与周报 Tab 相同的默认文案模板
+    function templateText(stats) {
+      var bubbleLine = stats.bubbles > 0
+        ? '这一周我们一共写下了 ' + stats.bubbles + ' 颗情绪泡泡，'
+        : '这一周我们还没有写情绪泡泡，';
+      var msgLine = stats.messages > 0
+        ? '在密语里聊了 ' + stats.messages + ' 句悄悄话。'
+        : '密语里也安安静静的。';
+      var soft = (stats.invitations > 0)
+        ? '其间有 ' + stats.invitations + ' 次温柔的邀约，把两颗心轻轻牵在了一起。\n'
+        : '偶尔只是静静地陪伴，也已经足够温暖。\n';
+      var emoSumm = '';
+      if (stats.topEmos && stats.topEmos.length) {
+        var top = stats.topEmos[0];
+        emoSumm = '这周出现最多的心情是「' + N.emoName(top.id) + '」，' + (top.count > 0 ? '出现了 ' + top.count + ' 次，' : '');
+      }
+      return bubbleLine + msgLine + '\n' + soft + emoSumm + '剩下的日子，也要轻轻的，一起走下去～';
+    }
+
+    // 降级方案：复杂 SVG 渲染失败时显示纯文字版海报（至少能截图）
+    function renderFallback(stats, rangeStr, editableText) {
+      var container = document.getElementById('posterView');
+      if (!container) { console.error('[poster] 降级渲染失败：posterView 不存在'); return; }
+      container.innerHTML =
+        '<div style="padding:30px 20px;text-align:center;background:#ECE7F3;border-radius:20px">' +
+          '<div style="font-size:18px;font-weight:bold;color:#6B5B8A;margin-bottom:8px;letter-spacing:4px">喃 言</div>' +
+          '<div style="font-size:16px;font-weight:600;color:#4A4458;margin-bottom:4px">双人情绪周报</div>' +
+          '<div style="font-size:12px;color:#8B83A0;margin-bottom:24px">' + N.utils.escapeHtml(rangeStr) + '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">' +
+            '<div style="background:#fff;padding:16px;border-radius:12px"><div style="font-size:24px;font-weight:bold;color:#9B8EC4">' + stats.bubbles + '</div><div style="font-size:12px;color:#8B83A0">情绪泡泡</div></div>' +
+            '<div style="background:#fff;padding:16px;border-radius:12px"><div style="font-size:24px;font-weight:bold;color:#9B8EC4">' + stats.messages + '</div><div style="font-size:12px;color:#8B83A0">密语</div></div>' +
+            '<div style="background:#fff;padding:16px;border-radius:12px"><div style="font-size:24px;font-weight:bold;color:#9B8EC4">' + stats.invitations + '</div><div style="font-size:12px;color:#8B83A0">邀约</div></div>' +
+            '<div style="background:#fff;padding:16px;border-radius:12px"><div style="font-size:24px;font-weight:bold;color:#9B8EC4">' + (stats.bubbles + stats.messages) + '</div><div style="font-size:12px;color:#8B83A0">轻声次数</div></div>' +
+          '</div>' +
+          '<div style="font-size:13px;color:#4A4458;line-height:1.6;margin-bottom:20px;white-space:pre-wrap;text-align:left">' + N.utils.escapeHtml(editableText) + '</div>' +
+          '<div style="font-size:11px;color:#B4ADC1">有些话，轻轻说 · 喃言</div>' +
+        '</div>';
+      console.log('[poster] 降级方案已渲染（纯文字版海报）');
+    }
+
+    // 渲染海报（结构与 space.js renderReport 中 #poster 完全一致）
+    function render() {
+      console.log('[poster] render 被调用, spaceId=', spaceId);
+      try {
+        sp = N.Space.list()[spaceId] || sp;
+        if (!sp) {
+          console.warn('[poster] 空间数据不存在');
+          var c = document.getElementById('posterView');
+          if (c) c.innerHTML = '<div class="center faint small" style="padding:40px 0">空间数据不存在</div>';
+          return;
+        }
+        sp.bubbles = sp.bubbles || [];
+        sp.messages = sp.messages || [];
+        sp.invitations = sp.invitations || [];
+
+        var thisWeek = N.utils.startOfWeek(new Date());
+        var weekStartTs = thisWeek.getTime();
+        var stats = N.Space.statsForWeek(spaceId, weekStartTs);
+        if (!stats) { stats = { bubbles: 0, messages: 0, invitations: 0, topEmos: [] }; }
+        // 防御性补全
+        stats.bubbles = stats.bubbles || 0;
+        stats.messages = stats.messages || 0;
+        stats.invitations = stats.invitations || 0;
+        stats.topEmos = stats.topEmos || [];
+
+        var wr = N.utils.weekRange(new Date());
+        var rangeStr = N.utils.fmtDate(wr.start.getTime()) + ' ~ ' + N.utils.fmtDate(wr.end.getTime());
+        var cur = N.Space.getReport(spaceId, weekStartTs);
+        var editableText = cur && cur.text ? cur.text : templateText(stats);
+
+        console.log('[poster] 统计数据:', JSON.stringify(stats), 'rangeStr=', rangeStr);
+
+        var topEmos = (stats.topEmos.length ? stats.topEmos : N.EMOTIONS.slice(0, 3).map(function (e) { return { id: e.id, count: 0 }; }));
+        var emosRow = topEmos.map(function (e) {
+          return '<div class="pe"><div class="emo">' + N.emoSvg(e.id) + '</div><div class="c">' + N.emoName(e.id) + ' ' + e.count + '</div></div>';
+        }).join('');
+        var avatars = (sp.members || []).map(function (m) {
+          var user = N.Auth.getUser(m) || {};
+          var av = (typeof N.avatarSvg === 'function')
+            ? N.avatarSvg(user.avatar)
+            : ('<img src="images/avatars/' + ((user.avatar && (user.avatar.image || user.avatar.custom || '')) || 'avatar2.png') + '" onerror="this.style.display=\'none\'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">');
+          return '<span class="avatar" style="width:28px;height:28px;border:2px solid #ECE7F3">' + av + '</span>';
+        }).join('');
+
+        var container = document.getElementById('posterView');
+        console.log('[poster] posterView元素:', container ? '存在' : '不存在');
+        if (!container) {
+          console.error('[poster] posterView 不存在，无法渲染');
+          return;
+        }
+        var memberNames = (sp.members || []).slice(0, 2).map(function (m) {
+          var u = N.Auth.getUser(m);
+          if (m === '__nangua__' || m === '喃呱') return '喃呱';
+          return u ? (u.nickname || u.name || u.username || m) : m;
+        });
+        var titleText = memberNames.length >= 2
+          ? memberNames[0] + ' 和 ' + memberNames[1] + '的情绪周报'
+          : (memberNames[0] || '我') + '的情绪周报';
+        var titleFontSize = titleText.length > 12 ? '16px' : '20px';
+        container.innerHTML =
+          '<div class="p-avatars">' + avatars + '</div>' +
+          '<div class="p-brand">喃 言</div>' +
+          '<div class="p-title" style="font-size:' + titleFontSize + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + N.utils.escapeHtml(titleText) + '</div>' +
+          '<div class="p-range">' + N.utils.escapeHtml(rangeStr) + '</div>' +
+          '<div class="p-stat-grid">' +
+            '<div class="p-stat"><div class="n">' + stats.bubbles + '</div><div class="l">情绪泡泡</div></div>' +
+            '<div class="p-stat"><div class="n">' + stats.messages + '</div><div class="l">密语</div></div>' +
+            '<div class="p-stat"><div class="n">' + stats.invitations + '</div><div class="l">邀约</div></div>' +
+            '<div class="p-stat"><div class="n">' + (stats.bubbles + stats.messages) + '</div><div class="l">轻声次数</div></div>' +
+          '</div>' +
+          '<div class="p-emos">' + emosRow + '</div>' +
+          '<div class="p-quote">' + N.utils.escapeHtml(editableText) + '</div>' +
+          '<div class="p-foot">有些话，轻轻说 · 喃言</div>';
+        console.log('[poster] 海报HTML已注入, container.innerHTML长度=', container.innerHTML.length);
+      } catch (err) {
+        console.error('[poster] render报错:', err, err && err.stack);
+        // 复杂渲染失败时启用降级方案
+        try {
+          var thisWeek2 = N.utils.startOfWeek(new Date());
+          var stats2 = N.Space.statsForWeek(spaceId, thisWeek2.getTime()) || { bubbles: 0, messages: 0, invitations: 0, topEmos: [] };
+          stats2.bubbles = stats2.bubbles || 0; stats2.messages = stats2.messages || 0; stats2.invitations = stats2.invitations || 0;
+          var wr2 = N.utils.weekRange(new Date());
+          var rangeStr2 = N.utils.fmtDate(wr2.start.getTime()) + ' ~ ' + N.utils.fmtDate(wr2.end.getTime());
+          var cur2 = N.Space.getReport(spaceId, thisWeek2.getTime());
+          var text2 = cur2 && cur2.text ? cur2.text : templateText(stats2);
+          renderFallback(stats2, rangeStr2, text2);
+        } catch (fbErr) {
+          console.error('[poster] 降级方案也失败:', fbErr);
+          var c2 = document.getElementById('posterView');
+          if (c2) c2.innerHTML = '<div class="center" style="padding:40px 20px;color:#D4888E"><div style="font-size:14px;margin-bottom:8px">海报渲染失败</div><div style="font-size:12px;color:#8B83A0">' + (err.message || err) + '</div></div>';
+        }
+      }
+    }
+
+    // 等 common.js 的 ICONS/SVG 注入完成
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      setTimeout(render, 0);
+    } else {
+      document.addEventListener('DOMContentLoaded', function () { setTimeout(render, 0); });
+    }
+  })();
+  </script>
+</body>
+</html>

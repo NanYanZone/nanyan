@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>喃言 · 我的主页</title>
+  <link rel="stylesheet" href="css/common.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- 顶部：标题独占一行居中 -->
+    <div class="topbar profile-topbar">
+      <div class="title">喃言</div>
+      <div class="action" id="btnEditAvatar" title="编辑形象" style="color:var(--fog-dark)">@</div>
+    </div>
+
+    <div class="page-scroller">
+      <!-- 个人头部 -->
+      <div class="profile-head">
+        <div class="avatar" id="myAvatar" style="width:78px;height:78px"></div>
+        <div class="nick" id="myNick">—</div>
+        <div class="uname" id="myUname">@—</div>
+      </div>
+
+      <!-- 功能宫格 -->
+      <div class="grid-fns" id="fnGrid">
+        <div class="fn-item" data-act="create">
+          <div class="ico" id="icoCreate"></div>
+          <div class="l">新建空间</div>
+        </div>
+        <div class="fn-item" data-act="join">
+          <div class="ico" id="icoJoin"></div>
+          <div class="l">加入空间</div>
+        </div>
+        <div class="fn-item" data-act="apps">
+          <div class="ico" id="icoApps"></div>
+          <div class="l">待处理申请</div>
+          <div class="pill hidden" id="appsPill">0</div>
+        </div>
+        <div class="fn-item" data-act="edit">
+          <div class="ico" id="icoEdit"></div>
+          <div class="l">编辑形象</div>
+        </div>
+        <div class="fn-item" data-act="pwd">
+          <div class="ico" id="icoPwd"></div>
+          <div class="l">修改密码</div>
+        </div>
+        <div class="fn-item" data-act="logout">
+          <div class="ico" id="icoLogout" style="color:var(--danger)"></div>
+          <div class="l text-danger">退出登录</div>
+        </div>
+      </div>
+
+      <!-- 空间列表 -->
+      <div class="section-title">我的空间</div>
+      <div id="spaceList"></div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>
