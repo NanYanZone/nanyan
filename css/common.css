@@ -1034,7 +1034,7 @@ img { display: block; max-width: 100%; }
 .onboard-mask {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 9998;
+  z-index: 10000;
   background: rgba(0, 0, 0, 0.45);
   display: flex; align-items: center; justify-content: center;
   padding: 0 20px;
@@ -1206,7 +1206,7 @@ img { display: block; max-width: 100%; }
 .appmask {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 9998;
+  z-index: 10000;
   background: rgba(0,0,0,0.45);
   display: flex;
   align-items: center;
@@ -1230,3 +1230,52 @@ img { display: block; max-width: 100%; }
 .appmask .app-msg { font-size: 14px; line-height: 1.6; color: var(--ink); margin-bottom: 18px; }
 .appmask .app-btns { display: flex; gap: 10px; }
 .appmask .app-btns .btn { flex: 1; }
+
+/* ============================================================
+ * 微信 X5 内核兼容性补丁
+ * 1. 全局 SVG 尺寸：确保表情/图标在 X5 中有明确尺寸
+ * 2. CSS 变量不支持时的 fallback（旧版 X5 / Android WebView）
+ * ============================================================ */
+
+/* 全局 SVG 尺寸：确保所有表情 SVG 在 X5 内核中正确渲染 */
+.emo svg, .pb-emo svg, .pe .emo svg, .cal-emos .emo svg,
+.emo-opt .emo svg, .poster .p-emos .emo svg,
+.b-head .emo svg, .bubble-detail .emo svg,
+.cal-cell .emo svg, .cal-detail .emo svg {
+  width: 100%; height: 100%; display: block;
+}
+
+/* CSS 变量不支持时的 fallback（@supports not 检测） */
+@supports not (--a: 0) {
+  body, .app { background: #FAF7F5; color: #4A4458; }
+  .topbar { background: #FAF7F5; }
+  .card { background: #FFFFFF; }
+  .sheet, .sheet-head { background: #FFFFFF; }
+  .toast { background: #4A4458; color: #fff; }
+  .toast-ok { background: #8FB9A6; color: #fff; }
+  .toast-err { background: #D4888E; color: #fff; }
+  .btn { background: #9B8EC4; color: #fff; }
+  .btn-ghost { background: #ECE7F3; color: #6B5B8A; }
+  .btn-outline { background: transparent; color: #6B5B8A; border: 1.5px solid #C9BFDF; }
+  .section-title { color: #8B83A0; }
+  .poster { background: #ECE7F3; }
+  .poster .p-brand { color: #6B5B8A; }
+  .poster .p-title { color: #4A4458; }
+  .poster .p-range { color: #8B83A0; }
+  .poster .p-stat .l { color: #8B83A0; }
+  .poster .p-quote { color: #4A4458; }
+  .poster .p-foot { color: #B4ADC1; }
+  .effect-layer { background: rgba(0,0,0,0.6); }
+  .onboard-mask, .appmask { background: rgba(0,0,0,0.45); }
+  .onboard-popup, .appmask .app-pop { background: #FFFFFF; box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
+  .onboard-text, .appmask .app-name, .appmask .app-msg { color: #4A4458; }
+  .onboard-skip { color: #B4ADC1; }
+  .tab-bar { background: #FFFFFF; }
+  .input, .textarea { background: #F3ECE6; border-color: #ECE6F0; color: #4A4458; }
+  .seg { background: #ECE7F3; }
+  .seg-item.active { background: #FFFFFF; color: #6B5B8A; }
+  .pool-bubble { background: #F0E9F4; }
+  .bubble-card { background: #FFFFFF; }
+  .cal-cell { background: #FFFFFF; }
+  .stat-card { background: #FFFFFF; }
+}
